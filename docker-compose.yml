@@ -1,0 +1,51 @@
+version: '3'
+services: 
+  postgres:  #name of the service
+    image: 'postgres:latest' #getting latest postgres image from Docker hub
+    environment:
+      - POSTGRES_PASSWORD=postgres_password
+  redis:
+    image: 'redis:latest' #getting latest redis image from Docker hub
+  api:
+    build:
+      dockerfile: Dockerfile.dev  #only the name of the dockerfile
+      context: ./server   #the path to the dockerfile relative to the current working directory
+    volumes:
+      - /app/node_modules  #bookmark this folder, do not overwrite it
+      - ./server:/app  #app directory inside the container gets redirected to server directory inside our project folder
+    environment:  #setting up environment variables
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - PGUSER=postgres
+      - PGHOST=postgres
+      - PGDATABASE=postgres
+      - PGPASSWORD=postgres_password
+      - PGPORT=5432
+  client:  #client service similar to server service
+    stdin_open: true
+    build:
+      dockerfile: Dockerfile.dev
+      context: ./client
+    volumes:
+      - /app/node_modules
+      - ./client:/app
+  worker:  #client service similar to server service
+    build:
+      dockerfile: Dockerfile.dev
+      context: ./worker
+    volumes:
+      - /app/node_modules
+      - ./worker:/app
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+  nginx:
+    restart: always
+    build:
+      dockerfile: Dockerfile.dev
+      context: ./nginx
+    ports:
+      - '3050:80' 
+
+
+    
